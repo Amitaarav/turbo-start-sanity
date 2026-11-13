@@ -26,9 +26,7 @@ interface SanityBlogDocument {
   publishedAt?: string;
   featured?: boolean;
   image?: {
-    asset?: {
-      url?: string;
-    };
+    url?: string;
     alt?: string;
   };
   authors?: Array<{
@@ -197,7 +195,7 @@ export async function POST(request: NextRequest) {
       authorName: author?.name ?? "",
       authorId: author?._id ?? "",
       authorPosition: author?.position ?? "",
-      imageUrl: document.image?.asset?.url ?? "",
+      imageUrl: document.image?.url ?? "",
       imageAlt: document.image?.alt ?? "",
     };
 
