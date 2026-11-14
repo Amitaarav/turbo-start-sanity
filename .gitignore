@@ -38,6 +38,7 @@ npm-debug.log*
 .DS_Store
 *.pem
 .env*.local
+powershell.cmd
 
 # Claude
 .claude/settings.local.json

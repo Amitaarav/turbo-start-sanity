@@ -22,6 +22,8 @@ const env = createEnv({
     // ALgolia related credentials and api keys
     ALGOLIA_APP_ID: z.string().min(1).optional(),
     ALGOLIA_ADMIN_API_KEY: z.string().min(1).optional(),
+    ALGOLIA_SAFE_API_KEY: z.string().min(1).optional(),
+    ALGOLIA_WRITE_API_KEY: z.string().min(1).optional(),
     SANITY_ALGOLIA_WEBHOOK_SECRET: z.string().min(1).optional(),
   },
 

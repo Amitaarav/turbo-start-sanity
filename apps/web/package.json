@@ -16,7 +16,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:presentation": "playwright test --config playwright.presentation.config.ts",
     "algolia:backfill": "tsx scripts/backfill-algolia.ts",
-    "algolia:verify": "tsx scripts/verify-algolia.ts"
+    "algolia:verify": "tsx scripts/verify-algolia.ts",
+    "sanity:add-newsletter": "tsx scripts/add-newsletter-block.ts"
   },
   "dependencies": {
     "@ai-sdk/mcp": "^2.0.91",
