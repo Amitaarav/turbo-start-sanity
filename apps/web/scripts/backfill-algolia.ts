@@ -89,15 +89,10 @@ async function main() {
       indexSettings: BLOG_INDEX_SETTINGS,
     });
 
-    await algolia.waitForTask(
-      {
-        indexName: ALGOLIA_BLOG_INDEX,
-        taskID: settingsTask.taskID,
-      },
-      {
-        maxRetries: 300,
-      }
-    );
+    await algolia.waitForTask({
+      indexName: ALGOLIA_BLOG_INDEX,
+      taskID: settingsTask.taskID,
+    });
 
     console.log("Index settings applied.");
   } catch (warning) {
