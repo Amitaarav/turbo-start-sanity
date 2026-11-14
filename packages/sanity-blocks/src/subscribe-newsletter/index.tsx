@@ -29,6 +29,8 @@ export interface SubscribeNewsletterProps {
   title?: string | null;
 }
 
+type FormSubmitEvent = Parameters<NonNullable<ComponentProps<"form">["onSubmit"]>>[0];
+
 function SubscribeNewsletterButton({ isPending }: { isPending?: boolean }) {
   const { pending: formPending } = useFormStatus();
   const pending = isPending ?? formPending;
@@ -117,7 +119,7 @@ export function SubscribeNewsletter({
     message: string;
   } | null>(null);
 
-  const handleSubmit = async (e: HTMLFormElement) => {
+  const handleSubmit = async (e: FormSubmitEvent) => {
     if (onSubmit) {
       onSubmit(e);
       return;
