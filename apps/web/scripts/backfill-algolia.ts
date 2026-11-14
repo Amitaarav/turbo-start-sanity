@@ -82,22 +82,15 @@ async function main() {
     }
     }
   console.log("Applying Algolia index settings...");
-
   try {
-    const settingsTask = await algolia.setSettings({
+    await algolia.setSettings({
       indexName: ALGOLIA_BLOG_INDEX,
       indexSettings: BLOG_INDEX_SETTINGS,
     });
-
-    await algolia.waitForTask({
-      indexName: ALGOLIA_BLOG_INDEX,
-      taskID: settingsTask.taskID,
-    });
-
     console.log("Index settings applied.");
   } catch (warning) {
     console.warn(
-      "Notice: Index settings queued (waitForTask timed out). Proceeding with document indexing...",
+      "Notice: Index settings update failed or queued:",
       warning instanceof Error ? warning.message : warning
     );
   }
@@ -105,17 +98,10 @@ async function main() {
   for (let i = 0; i < records.length; i += BATCH_SIZE) {
     const batch = records.slice(i, i + BATCH_SIZE);
 
-    const tasks = await algolia.saveObjects({
+    await algolia.saveObjects({
       indexName: ALGOLIA_BLOG_INDEX,
       objects: batch,
     });
-
-    for (const task of tasks) {
-      await algolia.waitForTask({
-        indexName: ALGOLIA_BLOG_INDEX,
-        taskID: task.taskID,
-      });
-    }
 
     console.log(
       `Indexed ${Math.min(i + batch.length, records.length)} / ${records.length} blogs`
