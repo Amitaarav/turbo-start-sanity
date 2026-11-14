@@ -2,6 +2,27 @@ import { defineField } from "sanity";
 
 import { GROUP } from "@/utils/constant";
 
+export interface SeoDocSource {
+  title?: string | null;
+  seoTitle?: string | null;
+  description?: string | null;
+  seoDescription?: string | null;
+  image?: unknown;
+  seoImage?: unknown;
+}
+
+export function resolveSeoTitle(doc?: SeoDocSource | null): string {
+  return doc?.seoTitle?.trim() || doc?.title?.trim() || "";
+}
+
+export function resolveSeoDescription(doc?: SeoDocSource | null): string {
+  return doc?.seoDescription?.trim() || doc?.description?.trim() || "";
+}
+
+export function resolveSeoImage(doc?: SeoDocSource | null): unknown {
+  return doc?.seoImage || doc?.image || null;
+}
+
 export const seoFields = [
   defineField({
     name: "seoTitle",
