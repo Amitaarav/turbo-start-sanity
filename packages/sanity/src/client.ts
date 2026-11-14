@@ -5,10 +5,17 @@ import type { SanityImageSource } from "@sanity/asset-utils";
 import { createImageUrlBuilder } from "@sanity/image-url";
 import { env } from "@workspace/env/client";
 
+function getValidApiVersion(version?: string): string {
+  if (!version || version === "v1" || version === "1" || version < "2021-03-25") {
+    return DEFAULT_SANITY_API_VERSION;
+  }
+  return version;
+}
+
 export const client = createClient({
   projectId: env.NEXT_PUBLIC_SANITY_PROJECT_ID,
   dataset: env.NEXT_PUBLIC_SANITY_DATASET,
-  apiVersion: env.NEXT_PUBLIC_SANITY_API_VERSION || DEFAULT_SANITY_API_VERSION,
+  apiVersion: getValidApiVersion(env.NEXT_PUBLIC_SANITY_API_VERSION),
   useCdn: env.NODE_ENV === "production",
   perspective: "published",
   stega: {
