@@ -22,6 +22,7 @@ export interface SanityBlogDocument {
 }
 
 export interface AlgoliaBlogRecord {
+  [key: string]: unknown;
   objectID: string;
   title: string;
   description: string;
