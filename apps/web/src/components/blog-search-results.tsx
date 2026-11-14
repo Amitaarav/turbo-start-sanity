@@ -1,140 +1,104 @@
-"use client";
-
-import { cn } from "@workspace/tailwind-config/utils";
-import type { ReactNode } from "react";
-
-import { BlogList } from "@/components/blog-list";
+import { BlogCard } from "@/components/blog-card";
+import { Button } from "@workspace/ui/components/button";
 import type { Blog } from "@/types";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
-type BlogSearchResultsProps = Readonly<{
-  className?: string;
+export interface BlogSearchResultsProps {
   results: Blog[];
+  searchQuery: string;
   isSearching: boolean;
   hasQuery: boolean;
-  searchQuery: string;
-  error?: Error | null;
-  onClear?: () => void;
-}>;
-
-function Term({ children }: Readonly<{ children: string }>) {
-  return <span className="text-foreground">“{children}”</span>;
-}
-
-function SearchResultsHeader({
-  query,
-  count,
-}: Readonly<{
-  query: string;
-  count: number;
-}>) {
-  return (
-    <div className="grid gap-1">
-      <h2 className="text-balance font-normal text-2xl tracking-tight">
-        Search results for <Term>{query}</Term>
-      </h2>
-      <p className="text-muted-foreground text-sm tabular-nums">
-        {count === 0
-          ? "No articles found"
-          : `${count} article${count === 1 ? "" : "s"} found`}
-      </p>
-    </div>
-  );
-}
-
-const STATE_TITLE = "font-medium text-foreground text-lg";
-
-function StateFrame({ children }: Readonly<{ children: ReactNode }>) {
-  return (
-    <div className="grid h-full place-content-center justify-items-center gap-8 py-16 text-center">
-      {children}
-    </div>
-  );
-}
-
-const ACTION_CLASS =
-  "focus-ring inline-flex min-h-11 w-max shrink-0 items-center rounded-none border border-foreground px-3 font-mono text-foreground text-sm uppercase tracking-wide transition-colors hover:bg-foreground hover:text-background";
-
-function EmptySearchState({
-  query,
-  onClear,
-}: Readonly<{
-  query: string;
-  onClear?: () => void;
-}>) {
-  return (
-    <>
-      <div className="grid gap-6">
-        <SearchResultsHeader count={0} query={query} />
-        <p className="max-w-[70ch] text-pretty text-foreground">
-          We couldn&rsquo;t find any articles matching <Term>{query}</Term>. Try
-          adjusting your search terms.
-        </p>
-      </div>
-      {onClear ? (
-        <button className={ACTION_CLASS} onClick={onClear} type="button">
-          Clear search
-        </button>
-      ) : null}
-    </>
-  );
-}
-
-function ErrorState({ query }: Readonly<{ query: string }>) {
-  return (
-    <div className="grid gap-6">
-      <SearchResultsHeader count={0} query={query} />
-      <h3 className={cn(STATE_TITLE, "text-destructive")}>Search failed</h3>
-      <p className="max-w-[70ch] text-pretty text-muted-foreground">
-        We encountered an error while searching for <Term>{query}</Term>. Please
-        try again.
-      </p>
-    </div>
-  );
-}
-
-function LoadingState() {
-  return <output className="block text-muted-foreground">Searching…</output>;
+  error?: unknown;
+  onClear: () => void;
+  page?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
 }
 
 export function BlogSearchResults({
-  className,
   results,
+  searchQuery,
   isSearching,
   hasQuery,
-  searchQuery,
   error,
   onClear,
-}: BlogSearchResultsProps) {
-  if (!hasQuery) {
-    return null;
-  }
-
+  page = 1,
+  totalPages = 1,
+  onPageChange,
+}: Readonly<BlogSearchResultsProps>) {
   if (isSearching) {
     return (
-      <section className={cn("mt-8", className)}>
-        <LoadingState />
-      </section>
+      <div className="flex flex-col items-center justify-center border border-border py-16 text-center">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        <p className="mt-4 text-sm text-muted-foreground">Searching articles…</p>
+      </div>
     );
   }
 
-  if (error || results.length === 0) {
+  if (error) {
     return (
-      <section className={cn("min-h-full", className)}>
-        <StateFrame>
-          {error ? (
-            <ErrorState query={searchQuery} />
-          ) : (
-            <EmptySearchState onClear={onClear} query={searchQuery} />
-          )}
-        </StateFrame>
-      </section>
+      <div className="border border-border p-8 text-center">
+        <p className="text-base text-destructive">
+          Search service is temporarily unavailable. Please try again.
+        </p>
+        <Button className="mt-4" onClick={onClear} size="sm" variant="outline">
+          Reset search
+        </Button>
+      </div>
+    );
+  }
+
+  if (hasQuery && results.length === 0) {
+    return (
+      <div className="border border-border p-8 text-center">
+        <p className="text-base text-muted-foreground">
+          No articles found matching &ldquo;{searchQuery}&rdquo;.
+        </p>
+        <Button className="mt-4" onClick={onClear} size="sm" variant="outline">
+          Clear search
+        </Button>
+      </div>
     );
   }
 
   return (
-    <section className={cn("mt-8 grid gap-6", className)}>
-      <SearchResultsHeader count={results.length} query={searchQuery} />
-      <BlogList blogs={results} />
-    </section>
+    <div className="flex flex-col gap-8">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {results.map((blog) => (
+          <BlogCard blog={blog} key={blog._id} />
+        ))}
+      </div>
+
+      {totalPages > 1 && onPageChange && (
+        <div className="flex items-center justify-between border-t border-border pt-6">
+          <Button
+            aria-label="Previous search results page"
+            disabled={page <= 1}
+            onClick={() => onPageChange(page - 1)}
+            size="sm"
+            variant="outline"
+          >
+            <ChevronLeft className="mr-1 size-4" />
+            Previous
+          </Button>
+
+          <span className="text-sm text-muted-foreground">
+            Page {page} of {totalPages}
+          </span>
+
+          <Button
+            aria-label="Next search results page"
+            disabled={page >= totalPages}
+            onClick={() => onPageChange(page + 1)}
+            size="sm"
+            variant="outline"
+          >
+            Next
+            <ChevronRight className="ml-1 size-4" />
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }
+

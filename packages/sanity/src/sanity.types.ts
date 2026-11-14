@@ -916,6 +916,18 @@ export type HomePage = {
   ogDescription?: string;
 };
 
+export type Subscriber = {
+  _id: string;
+  _type: "subscriber";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  email: string;
+  subscribedAt?: string;
+  source?: string;
+  status?: "active" | "unsubscribed";
+};
+
 export type Author = {
   _id: string;
   _type: "author";
@@ -1513,6 +1525,7 @@ export type AllSanitySchemaTypes =
   | Settings
   | BlogIndex
   | HomePage
+  | Subscriber
   | Author
   | Faq
   | Page
@@ -3663,13 +3676,7 @@ export type QueryBlogIndexPageResult = {
         description: string | null;
         slug: string | null;
         category:
-          | "aeo"
-          | "changelog"
-          | "nextjs"
-          | "sanity"
-          | "seo"
-          | "skills"
-          | null;
+          "aeo" | "changelog" | "nextjs" | "sanity" | "seo" | "skills" | null;
         image: {
           id: string | null;
           preview: string | null;
@@ -3715,13 +3722,7 @@ export type QueryBlogIndexPageResult = {
     description: string | null;
     slug: string | null;
     category:
-      | "aeo"
-      | "changelog"
-      | "nextjs"
-      | "sanity"
-      | "seo"
-      | "skills"
-      | null;
+      "aeo" | "changelog" | "nextjs" | "sanity" | "seo" | "skills" | null;
     image: {
       id: string | null;
       preview: string | null;

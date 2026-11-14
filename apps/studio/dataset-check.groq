@@ -1,0 +1,6 @@
+﻿{
+  "blog": count(*[_type == "blog"]),
+  "withCategory": count(*[_type == "blog" && defined(category)]),
+  "page": count(*[_type == "page"]),
+  "author": count(*[_type == "author"])
+}

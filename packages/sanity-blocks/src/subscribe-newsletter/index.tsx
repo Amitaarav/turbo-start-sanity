@@ -8,7 +8,7 @@ import { SanityImage } from "@workspace/sanity-blocks/internal/sanity-image";
 import { cn } from "@workspace/tailwind-config/utils";
 import { Button } from "@workspace/ui/components/button";
 import { LoaderCircle } from "lucide-react";
-import type { ComponentProps } from "react";
+import { type ComponentProps, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 export interface NewsletterTestimonial {
@@ -29,8 +29,9 @@ export interface SubscribeNewsletterProps {
   title?: string | null;
 }
 
-function SubscribeNewsletterButton() {
-  const { pending } = useFormStatus();
+function SubscribeNewsletterButton({ isPending }: { isPending?: boolean }) {
+  const { pending: formPending } = useFormStatus();
+  const pending = isPending ?? formPending;
   return (
     <Button
       aria-label={pending ? "Subscribing..." : "Subscribe to newsletter"}
@@ -102,14 +103,74 @@ function TestimonialPanel({
 }
 
 export function SubscribeNewsletter({
-  action,
+  action = "/api/newsletter",
   title,
   subTitle,
   helperText,
-  method,
+  method = "post",
   onSubmit,
   testimonial,
 }: Readonly<SubscribeNewsletterProps>) {
+  const [isPending, setIsPending] = useState(false);
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  const handleSubmit = async (e: HTMLFormElement) => {
+    if (onSubmit) {
+      onSubmit(e);
+      return;
+    }
+
+    e.preventDefault();
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const email = formData.get("email");
+
+    if (!email || typeof email !== "string") {
+      setFeedback({ type: "error", message: "Please enter a valid email address." });
+      return;
+    }
+
+    setIsPending(true);
+    setFeedback(null);
+
+    try {
+      const targetAction = typeof action === "string" ? action : "/api/newsletter";
+      const res = await fetch(targetAction, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (res.ok) {
+        setFeedback({
+          type: "success",
+          message: data?.message || "Thank you for subscribing!",
+        });
+        form.reset();
+      } else {
+        setFeedback({
+          type: "error",
+          message: data?.error || "Subscription failed. Please try again.",
+        });
+      }
+    } catch {
+      setFeedback({
+        type: "error",
+        message: "Network error. Please try again later.",
+      });
+    } finally {
+      setIsPending(false);
+    }
+  };
+
   // A cleared Sanity object is still truthy; only treat the testimonial as
   // present when it actually carries content.
   const hasTestimonialContent = Boolean(
@@ -151,8 +212,8 @@ export function SubscribeNewsletter({
               <form
                 action={action}
                 className="flex w-full items-center gap-1.5 bg-muted py-1.5 pr-1.5 pl-4 has-[input:focus-visible]:[outline:2px_dotted_var(--foreground)] has-[input:focus-visible]:outline-offset-2"
-                method={method ?? "post"}
-                onSubmit={onSubmit}
+                method={method}
+                onSubmit={handleSubmit}
               >
                 <input
                   aria-label="Email address"
@@ -162,8 +223,21 @@ export function SubscribeNewsletter({
                   required
                   type="email"
                 />
-                <SubscribeNewsletterButton />
+                <SubscribeNewsletterButton isPending={isPending} />
               </form>
+              {feedback && (
+                <p
+                  role="status"
+                  className={cn(
+                    "text-sm font-medium",
+                    feedback.type === "success"
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-destructive"
+                  )}
+                >
+                  {feedback.message}
+                </p>
+              )}
               {helperText && (
                 <RichText
                   className="text-muted-foreground text-sm leading-5 [&_a]:rounded-none [&_a]:font-medium [&_a]:text-foreground [&_a]:underline [&_a]:decoration-solid"
