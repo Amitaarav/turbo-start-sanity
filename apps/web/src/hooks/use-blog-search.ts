@@ -1,10 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { Blog } from "@/types";
 
 const SEARCH_DEBOUNCE_MS = 300;
-const CACHE_STALE_TIME_MS = 30_000;
+const CACHE_TTL_MS = 30_000;
 
 export interface BlogSearchResponse {
   results: Blog[];
@@ -13,6 +12,9 @@ export interface BlogSearchResponse {
   total: number;
   hitsPerPage?: number;
 }
+
+// In-memory cache for search queries
+const searchCache = new Map<string, { data: BlogSearchResponse; timestamp: number }>();
 
 async function searchBlog(
   query: string,
@@ -23,6 +25,12 @@ async function searchBlog(
   const trimmed = query.trim();
   if (!trimmed) {
     return { results: [], page: 1, totalPages: 0, total: 0 };
+  }
+
+  const cacheKey = `${trimmed}::${page}::${category || ""}`;
+  const cached = searchCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.data;
   }
 
   const params = new URLSearchParams({
@@ -44,16 +52,20 @@ async function searchBlog(
 
   const data = await response.json();
 
+  let formatted: BlogSearchResponse;
   if (Array.isArray(data)) {
-    return {
+    formatted = {
       results: data as Blog[],
       page: 1,
       totalPages: 1,
       total: data.length,
     };
+  } else {
+    formatted = data as BlogSearchResponse;
   }
 
-  return data as BlogSearchResponse;
+  searchCache.set(cacheKey, { data: formatted, timestamp: Date.now() });
+  return formatted;
 }
 
 export function useBlogSearch(initialCategory?: string | null) {
@@ -61,26 +73,66 @@ export function useBlogSearch(initialCategory?: string | null) {
   const [page, setPage] = useState(1);
   const [category, setCategory] = useState<string | null>(initialCategory ?? null);
 
+  const [results, setResults] = useState<Blog[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
   const debouncedQuery = useDebounce(searchQuery, SEARCH_DEBOUNCE_MS);
   const hasQuery = debouncedQuery.trim().length > 0;
 
-  const handleQueryChange = (q: string) => {
+  const handleQueryChange = useCallback((q: string) => {
     setSearchQuery(q);
-    setPage(1); // Reset to page 1 on new search query
-  };
+    setPage(1);
+  }, []);
 
-  const handleCategoryChange = (cat: string | null) => {
+  const handleCategoryChange = useCallback((cat: string | null) => {
     setCategory(cat);
     setPage(1);
-  };
+  }, []);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["blog-search", debouncedQuery, page, category],
-    queryFn: ({ signal }) =>
-      searchBlog(debouncedQuery, page, category, signal),
-    enabled: hasQuery,
-    staleTime: CACHE_STALE_TIME_MS,
-  });
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (!hasQuery) {
+      setResults([]);
+      setTotal(0);
+      setTotalPages(0);
+      setIsSearching(false);
+      setError(null);
+      return;
+    }
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    setIsSearching(true);
+    setError(null);
+
+    searchBlog(debouncedQuery, page, category, controller.signal)
+      .then((data) => {
+        setResults(data.results);
+        setTotal(data.total);
+        setTotalPages(data.totalPages);
+        setIsSearching(false);
+      })
+      .catch((err: unknown) => {
+        if (err instanceof Error && err.name === "AbortError") {
+          return;
+        }
+        setError(err instanceof Error ? err : new Error("Failed to search"));
+        setIsSearching(false);
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [debouncedQuery, page, category, hasQuery]);
 
   return {
     searchQuery,
@@ -89,10 +141,10 @@ export function useBlogSearch(initialCategory?: string | null) {
     setPage,
     category,
     setCategory: handleCategoryChange,
-    results: data?.results ?? [],
-    total: data?.total ?? 0,
-    totalPages: data?.totalPages ?? 0,
-    isSearching: isLoading,
+    results,
+    total,
+    totalPages,
+    isSearching,
     error,
     hasQuery,
   };
