@@ -3,7 +3,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import type { Blog } from "@/types";
 
 const SEARCH_DEBOUNCE_MS = 300;
-const CACHE_TTL_MS = 30_000;
+export const CACHE_TTL_MS = 30_000;
 
 export interface BlogSearchResponse {
   results: Blog[];
@@ -14,9 +14,9 @@ export interface BlogSearchResponse {
 }
 
 // In-memory cache for search queries
-const searchCache = new Map<string, { data: BlogSearchResponse; timestamp: number }>();
+export const searchCache = new Map<string, { data: BlogSearchResponse; timestamp: number }>();
 
-async function searchBlog(
+export async function searchBlog(
   query: string,
   page: number,
   category: string | null,
