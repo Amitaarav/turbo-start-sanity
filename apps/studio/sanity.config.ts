@@ -39,6 +39,9 @@ export default defineConfig({
     enabled: true,
   },
   plugins: [
+    structureTool({
+      structure,
+    }),
     presentationTool({
       resolve: {
         locations,
@@ -50,9 +53,6 @@ export default defineConfig({
           enable: "/api/presentation-draft",
         },
       },
-    }),
-    structureTool({
-      structure,
     }),
     presentationUrl(),
     visionTool(),

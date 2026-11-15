@@ -1,3 +1,9 @@
+import dns from "node:dns";
+
+if (typeof dns.setDefaultResultOrder === "function") {
+  dns.setDefaultResultOrder("ipv4first");
+}
+
 import { env } from "@workspace/env/server";
 import { cacheTag } from "next/cache";
 import { cookies, draftMode } from "next/headers";

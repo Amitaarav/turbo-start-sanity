@@ -32,6 +32,24 @@
 - **Graceful Failure on Algolia Outage**: If Algolia is down or unreachable, the route catches the failure, logs structured diagnostics, and responds with `HTTP 503 Service Unavailable` with `{ error: "Search service is temporarily unavailable", results: [], total: 0 }`. This informs callers transparently while ensuring the frontend UI renders a friendly retry state rather than crashing.
 - **Frontend Search UI**: Implemented `BlogSearchResults` with responsive grid layout, loading indicators, empty states, and pagination controls. Updated `useBlogSearch` hook and wired active category filtering directly from the blog layout.
 
+### Task 3: Sanity Studio SEO & Indexing Custom View Tab
+
+- **Custom Document View**: Built `SeoAndIndexingView` in `apps/studio/components/seo-indexing-view.tsx` and registered it as a secondary view tab alongside the standard `Content` form in `apps/studio/structure.ts`.
+- **Keystroke-Reactive SERP Preview**: Live Google Search Snippet preview driven by `document.displayed`. Reacts instantly to keystrokes in title, description, or slug without requiring the author to publish or save drafts.
+- **SEO Fallback Utility Reuse**: Reused existing utilities in `apps/studio/utils/seo-fields.ts` (`resolveSeoTitle`, `resolveSeoDescription`, `resolveSeoImage`) ensuring exact parity with frontend metadata generation (e.g. falling back to post title or body text snippet when dedicated SEO fields are omitted).
+- **Comprehensive SEO Health Audit**:
+  - *Title Length*: Optimal at 40–60 characters; displays warning when `< 40` and critical truncation alert when `> 60`.
+  - *Description Length*: Optimal at 140–160 characters; alerts when `< 140` or `> 160`.
+  - *Indexability*: Inspects `seoNoIndex` flag; displays green indexable badge or warning `noindex` badge.
+  - *List & Search Visibility*: Checks `seoHideFromLists`; warns if post is excluded from listings/feeds.
+  - *Social & Listing Image*: Verifies presence of a configured thumbnail/social card image asset.
+- **Live Algolia Content Parity Check**:
+  - Replaced basic record-existence check with deep content parity evaluation against `document.published`.
+  - Compares published `title`, `description`, and `category` against the live Algolia record.
+  - Detects unpublished draft modifications: alerts authors when draft edits have not yet been synced to Algolia, showing a side-by-side comparison table of Sanity Published vs Algolia Record.
+- **Publish-Aware Auto-Refresh**: Watches `published._rev` and automatically triggers an Algolia index recheck immediately upon publishing plus an asynchronous 2-second delayed check to allow background webhook propagation to settle.
+- **Secure Configuration**: No hardcoded Algolia credentials or fallbacks. Uses Vite-bundled environment variables `SANITY_STUDIO_ALGOLIA_APP_ID` and `SANITY_STUDIO_ALGOLIA_SEARCH_KEY`.
+
 ---
 
 ## 2. What I noticed

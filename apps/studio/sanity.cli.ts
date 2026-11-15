@@ -11,7 +11,7 @@ const dataset = process.env.SANITY_STUDIO_DATASET ?? "production";
 // set it as SANITY_STUDIO_APP_ID so later deploys target the same app. Replaces
 // the deprecated `studioHost` / *.sanity.studio mechanism.
 // https://www.sanity.io/docs/help/studio-host-user-applications
-const appId = process.env.SANITY_STUDIO_APP_ID || undefined;
+const appId = process.env.SANITY_STUDIO_APP_ID || "qj1d5egusc3kwq7j1yeicyga";
 
 if (!projectId) {
   logger.warn(
@@ -30,7 +30,7 @@ export default defineCliConfig({
     dataset,
   },
   deployment: {
-    appId,
+    appId: process.env.SANITY_STUDIO_APP_ID || "qj1d5egusc3kwq7j1yeicyga",
     autoUpdates: false,
   },
   schemaExtraction: {

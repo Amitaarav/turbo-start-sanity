@@ -50,7 +50,8 @@ export function SeoAndIndexingView({ document: docState, documentId }: SeoIndexi
   const seoHideFromLists = Boolean(displayed.seoHideFromLists);
 
   const cleanId = (documentId || (displayed._id as string) || "").replace(/^drafts\./, "");
-  const canonicalUrl = `${SITE_URL.replace(/\/$/, "")}/blog/${slug || "post-url-slug"}`;
+  const cleanSlug = (slug || "post-url-slug").replace(/^\/?(blog\/)?/, "");
+  const canonicalUrl = `${SITE_URL.replace(/\/$/, "")}/blog/${cleanSlug}`;
 
   // Published document expected values for sync comparison
   const publishedTitle = resolveSeoTitle(published);

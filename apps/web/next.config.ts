@@ -1,3 +1,9 @@
+import dns from "node:dns";
+
+if (typeof dns.setDefaultResultOrder === "function") {
+  dns.setDefaultResultOrder("ipv4first");
+}
+
 import "@workspace/env/client";
 import "@workspace/env/server";
 
