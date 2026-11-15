@@ -3,18 +3,35 @@
 import { useOptimistic } from "@sanity/visual-editing/react";
 import { env } from "@workspace/env/client";
 import { CTABlock } from "@workspace/sanity-blocks/cta/index";
-import { FaqAccordion } from "@workspace/sanity-blocks/faq-accordion/index";
 import { FeatureCardsWithIcon } from "@workspace/sanity-blocks/feature-cards-icon/index";
 import { HeroBlock } from "@workspace/sanity-blocks/hero/index";
 import { HeroSplit } from "@workspace/sanity-blocks/hero-split/index";
-import { LogoCloud } from "@workspace/sanity-blocks/logo-cloud/index";
 import { RichTextBlock } from "@workspace/sanity-blocks/rich-text-block/index";
-import { ShowcaseGrid } from "@workspace/sanity-blocks/showcase-grid/index";
-import { SocialGrid } from "@workspace/sanity-blocks/social-grid/index";
-import { SubscribeNewsletter } from "@workspace/sanity-blocks/subscribe-newsletter/index";
-import { VideoFeature } from "@workspace/sanity-blocks/video-feature/index";
 import { cn } from "@workspace/tailwind-config/utils";
+import dynamic from "next/dynamic";
 import { createDataAttribute } from "next-sanity";
+
+// Below-the-fold and heavy interactive blocks loaded via dynamic imports (SSR preserved)
+const FaqAccordion = dynamic(() =>
+  import("@workspace/sanity-blocks/faq-accordion/index").then((m) => m.FaqAccordion)
+);
+const LogoCloud = dynamic(() =>
+  import("@workspace/sanity-blocks/logo-cloud/index").then((m) => m.LogoCloud)
+);
+const ShowcaseGrid = dynamic(() =>
+  import("@workspace/sanity-blocks/showcase-grid/index").then((m) => m.ShowcaseGrid)
+);
+const SocialGrid = dynamic(() =>
+  import("@workspace/sanity-blocks/social-grid/index").then((m) => m.SocialGrid)
+);
+const SubscribeNewsletter = dynamic(() =>
+  import("@workspace/sanity-blocks/subscribe-newsletter/index").then(
+    (m) => m.SubscribeNewsletter
+  )
+);
+const VideoFeature = dynamic(() =>
+  import("@workspace/sanity-blocks/video-feature/index").then((m) => m.VideoFeature)
+);
 
 import type { PageBuilderBlock, PagebuilderType } from "@/types";
 
