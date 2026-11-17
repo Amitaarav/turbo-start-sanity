@@ -18,14 +18,16 @@ export const subscriber = defineType({
           .error("A valid email address is required"),
       readOnly: true,
     }),
+
     defineField({
       name: "subscribedAt",
       type: "datetime",
       title: "Subscribed At",
       description: "Timestamp when the user subscribed",
       readOnly: true,
-      initialValue: () => new Date().toISOString(),
+      // initialValue: () => new Date().toISOString(), //every new subscriber immediately became active
     }),
+
     defineField({
       name: "source",
       type: "string",
@@ -34,6 +36,7 @@ export const subscriber = defineType({
       initialValue: "website",
       readOnly: true,
     }),
+
     defineField({
       name: "status",
       type: "string",
@@ -42,22 +45,57 @@ export const subscriber = defineType({
         list: [
           { title: "Active", value: "active" },
           { title: "Unsubscribed", value: "unsubscribed" },
+          { title: "Pending Verification", value: "pending"},
         ],
         layout: "radio",
       },
-      initialValue: "active",
+      initialValue: "peding",
+      readOnly: true,
+      validation: (Rule) => Rule.required(),
+    }),
+
+    defineField({
+      name: "unscubscribedAt",
+      type: "datetime",
+      title: "Unsubscribed At",
+      description: "Timestamp when the user unsubscribed",
+      readOnly: true,
+    }),
+
+    defineField({
+      name: "verificationTokenHash",
+      type: "string",
+      title: "Verification Token Hash",
+      description: "SHA-256 hash of the verification token",
+      readOnly: true,
+    }),
+
+    defineField({
+      name: "verificationExpiresAt",
+      type: "datetime",
+      title: "Verification Token Expiry",
+      description: "Expiration time of the verification token",
+      readOnly: true,
     }),
   ],
   preview: {
     select: {
       title: "email",
-      subtitle: "subscribedAt",
+      status: "status",
+      subscribedAt: "subscribedAt",
     },
-    prepare: ({ title, subtitle }) => {
-      const date = subtitle ? new Date(subtitle).toLocaleDateString() : "";
+    prepare: ({ title, status, subscribedAt }) => {
+      const date = subscribedAt ? new Date(subscribedAt).toLocaleDateString() : "";
+
+      const statusLebel = {
+        pending: "Pending verification",
+        active: "Active",
+        unsubscribed: "Unsubscribed",
+      }[status as string] || "Unknown State";
+
       return {
         title: title || "No email",
-        subtitle: date ? `Subscribed: ${date}` : "Pending",
+        subtitle: date ? `${statusLebel} . ${date}` : statusLebel,
       };
     },
   },

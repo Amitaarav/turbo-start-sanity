@@ -37,7 +37,7 @@ export class RateLimiter {
         options.windowMs <= 0) {
       throw new Error("windowMs must be positive");
     }
-    
+
     this.maxRequests = options.maxRequests;
     this.windowMs = options.windowMs;
   }
