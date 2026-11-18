@@ -11,6 +11,7 @@ if (!projectId) {
     "SANITY_STUDIO_PROJECT_ID must be set to deploy the blueprint"
   );
 }
+
 const dataset = process.env.SANITY_STUDIO_DATASET ?? "production";
 
 export default defineBlueprint({

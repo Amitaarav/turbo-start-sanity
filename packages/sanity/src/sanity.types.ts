@@ -925,7 +925,10 @@ export type Subscriber = {
   email: string;
   subscribedAt?: string;
   source?: string;
-  status?: "active" | "unsubscribed";
+  status: "active" | "unsubscribed" | "pending";
+  unscubscribedAt?: string;
+  verificationTokenHash?: string;
+  verificationExpiresAt?: string;
 };
 
 export type Author = {

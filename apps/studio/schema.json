@@ -6197,8 +6197,33 @@
             {
               "type": "string",
               "value": "unsubscribed"
+            },
+            {
+              "type": "string",
+              "value": "pending"
             }
           ]
+        },
+        "optional": false
+      },
+      "unscubscribedAt": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        },
+        "optional": true
+      },
+      "verificationTokenHash": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        },
+        "optional": true
+      },
+      "verificationExpiresAt": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
         },
         "optional": true
       }
