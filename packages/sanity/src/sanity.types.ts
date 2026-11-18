@@ -926,7 +926,7 @@ export type Subscriber = {
   subscribedAt?: string;
   source?: string;
   status: "active" | "unsubscribed" | "pending";
-  unscubscribedAt?: string;
+  unsubscribedAt?: string;
   verificationTokenHash?: string;
   verificationExpiresAt?: string;
 };

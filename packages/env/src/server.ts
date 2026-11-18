@@ -25,6 +25,10 @@ const env = createEnv({
     ALGOLIA_SAFE_API_KEY: z.string().min(1).optional(),
     ALGOLIA_WRITE_API_KEY: z.string().min(1).optional(),
     SANITY_ALGOLIA_WEBHOOK_SECRET: z.string().min(1).optional(),
+
+    // Newsletter email delivery
+    RESEND_API_KEY: z.string().min(1).optional(),
+    NEWSLETTER_FROM_EMAIL: z.email().optional(),
   },
 
   experimental__runtimeEnv: {

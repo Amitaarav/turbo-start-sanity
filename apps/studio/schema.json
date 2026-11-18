@@ -6206,7 +6206,7 @@
         },
         "optional": false
       },
-      "unscubscribedAt": {
+      "unsubscribedAt": {
         "type": "objectAttribute",
         "value": {
           "type": "string"

@@ -2,11 +2,29 @@
 
 ## 1. What I built and why
 
-### Task 1: Newsletter Signup
+### Task 1: Newsletter Signup & Verification Lifecycle
 
-- **Studio Schema (`subscriber`)**: Defined a new `subscriber` document type in `apps/studio/schemaTypes/documents/subscriber.ts` and registered it in both the document registry and the Studio desk navigation structure with a `Mail` icon. Fields include `email` (read-only in Studio to avoid tampering), `subscribedAt` (ISO timestamp), `source` (e.g., website), and an editable `status` (`active` vs `unsubscribed`).
+- **Studio Schema (`subscriber`)**: Defined a new `subscriber` document type in `apps/studio/schemaTypes/documents/subscriber.ts` and registered it in both the document registry and the Studio desk navigation structure with a `Mail` icon. Fields include `email` (read-only in Studio to avoid tampering), `subscribedAt` (ISO timestamp set on verification), `source` (e.g., website), `status` (`pending`, `active`, `unsubscribed`), `unsubscribedAt`, `verificationTokenHash` (SHA-256 hash), and `verificationExpiresAt` (ISO timestamp).
+- **Cryptographic Token Lifecycle (`apps/web/src/lib/newsletter-token.ts`)**:
+  - Verification tokens use 32 bytes of cryptographically secure randomness (`randomBytes(32).toString('hex')`, 64 characters).
+  - Tokens are never stored in plaintext in the database; only their SHA-256 hash (`verificationTokenHash`) is persisted in Sanity.
+  - Verification links expire in 15 minutes (`verificationExpiresAt`).
+  - Hash comparisons utilize `crypto.timingSafeEqual` to eliminate timing side-channel attacks.
+- **Email Delivery via Resend (`apps/web/src/lib/email.ts`)**:
+  - Sends a responsive, accessible HTML and plain-text email with a one-click verification button and fallback link.
+  - Resend configuration: Uses `env.RESEND_API_KEY` and resolves the sender address from `env.NEWSLETTER_FROM_EMAIL`. For free/unverified tiers (such as `@gmail.com`), safely defaults to `onboarding@resend.dev` to prevent 403 domain verification rejections.
+  - Resilient mock mode in development and test environments when email credentials are not set.
+- **Double Opt-In Verification Flow (`/api/newsletter/verify` & `/newsletter/verify`)**:
+  - **`GET /api/newsletter/verify?token=...`**: Primary entry point when a subscriber clicks the link in their email client. Reads the token, fetches the subscriber by token hash with `stega: false`, validates expiry, and atomically patches `status: "active"` and `subscribedAt` while wiping the token hash and expiry.
+  - **Browser Redirection**: Browser requests (`Accept: text/html`) automatically redirect via HTTP 303 to `/newsletter/verify?status=success` (or `status=already-active`, `status=expired`, `status=invalid`).
+  - **`POST /api/newsletter/verify`**: JSON endpoint for programmatic / client-side verification, returning structured JSON status.
+  - **Replay Attack & Concurrency Protection**: Once verified, the token hash and expiry are atomically unset via Sanity's `ifRevisionId`. Re-clicking the link immediately fails closed with `not_found` / `invalid`. Concurrent verification attempts resolve safely via revision check.
+- **User-Facing Verification Page (`apps/web/src/app/newsletter/verify/page.tsx`)**:
+  - Dedicated page designed with Roboto's monospace typography, status tags, and action buttons.
+  - Handles all states: active confirmation, already subscribed notice, expired link with 1-click re-subscribe, and invalid link notice.
+  - Automatically redirects direct visits with `?token=...` through the verification pipeline.
 - **Deterministic Idempotency**: Rather than querying the dataset before inserting (which introduces race conditions under concurrent requests), the API computes a deterministic document ID: `subscriber.${sha256(email)}` and writes with Sanity's atomic `createIfNotExists`. Submitting the exact same email multiple times or double-clicking produces the same document ID, guaranteeing zero duplicate documents with no extra queries or race windows.
-- **Dual Content-Type Support**: Form submissions from native browser `<form>` elements send `application/x-www-form-urlencoded` or `multipart/form-data`, whereas programmatic clients (and modern AJAX hooks) send `application/json`. `POST /api/newsletter` detects the `Content-Type` header and seamlessly parses both `req.json()` and `req.formData()`. Browser navigation posts redirect back with `303 See Other` and `?subscribed=true`, while API requests receive a 201 JSON payload.
+- **Dual Content-Type Support**: Form submissions from native browser `<form>` elements send `application/x-www-form-urlencoded` or `multipart/form-data`, whereas programmatic clients (and modern AJAX hooks) send `application/json`. `POST /api/newsletter` detects the `Content-Type` header and seamlessly parses both `req.json()` and `req.formData()`. Browser navigation posts redirect back with `303 See Other` and `?subscribed=pending` (or `already-active`), while API requests receive a 202 JSON payload (`Please verify your email to complete your subscription.`) or 200 for already active.
 - **Fail-Closed Security & Payload Guard**: Following the pattern established in `revalidate-sync-tags`, the route enforces a `MAX_BODY_BYTES` limit (4 KB), validates email syntax using strict RFC 5322 compliance with a 254-character boundary, and fails closed with 503 if the required write token is unconfigured.
 - **Rate Limiting**: Public write endpoints require abuse mitigation. The rate limiter lives in `apps/web/src/lib/rate-limit.ts` using an in-memory sliding-window algorithm keyed on client IP (resolved via `X-Forwarded-For` / `X-Real-IP`). The threshold for newsletter signups is set to **5 requests per 15-minute window per IP**. Exceeded requests receive `HTTP 429 Too Many Requests` along with standard `Retry-After` and `X-RateLimit-*` headers.
 - **Frontend Block Wiring**: Updated `SubscribeNewsletter` in `packages/sanity-blocks/src/subscribe-newsletter/index.tsx` with progressive enhancement. It defaults `action` to `/api/newsletter` and `method` to `post`. In JavaScript-enabled environments, it intercepts submit, submits via JSON `fetch`, provides loading state on the button, and renders inline accessible status messages (`role="status"`) for success or error without page reloads.
@@ -239,6 +257,6 @@ After: the home page no longer loads that library. On desktop it is drawn sooner
 
 ## 3. What I'd do with more time
 
-- Implement an edge-compatible distributed rate limiter (e.g. Upstash Redis / Cloudflare KV) for production deployment where multiple serverless instances or regions do not share in-memory state.
+- Implement an edge-compatible distributed rate limiter for production deployment where multiple serverless instances or regions do not share in-memory state.
 - Add instant search auto-suggestions or highlighting via Algolia's snippet/highlight results.
 - Implement double opt-in verification or a honeypot field for the newsletter signup to filter automated spam bots without needing CAPTCHA challenges.

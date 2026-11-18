@@ -49,13 +49,13 @@ export const subscriber = defineType({
         ],
         layout: "radio",
       },
-      initialValue: "peding",
+      initialValue: "pending",
       readOnly: true,
       validation: (Rule) => Rule.required(),
     }),
 
     defineField({
-      name: "unscubscribedAt",
+      name: "unsubscribedAt",
       type: "datetime",
       title: "Unsubscribed At",
       description: "Timestamp when the user unsubscribed",
@@ -87,7 +87,7 @@ export const subscriber = defineType({
     prepare: ({ title, status, subscribedAt }) => {
       const date = subscribedAt ? new Date(subscribedAt).toLocaleDateString() : "";
 
-      const statusLebel = {
+      const statusLabel = {
         pending: "Pending verification",
         active: "Active",
         unsubscribed: "Unsubscribed",
@@ -95,7 +95,7 @@ export const subscriber = defineType({
 
       return {
         title: title || "No email",
-        subtitle: date ? `${statusLebel} . ${date}` : statusLebel,
+        subtitle: date ? `${statusLabel} · ${date}` : statusLabel,
       };
     },
   },

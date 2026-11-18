@@ -1,5 +1,5 @@
-import { Logger } from "@workspace/logger";
 import "dotenv/config";
+import { Logger } from "@workspace/logger";
 import path from "node:path";
 import { defineCliConfig } from "sanity/cli";
 
